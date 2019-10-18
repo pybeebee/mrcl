@@ -18,17 +18,18 @@ logger = logging.getLogger('experiment')
 def main(args):
     utils.set_seed(args.seed)
 
-    my_experiment = experiment(args.name, args, "../results/", commit_changes=args.commit)
+    my_experiment = experiment(args.name, args, "./results/", commit_changes=args.commit)
     writer = SummaryWriter(my_experiment.path + "tensorboard")
 
     logger = logging.getLogger('experiment')
 
     # Using first 963 classes of the omniglot as the meta-training set
-    args.classes = list(range(963))
+    # args.classes = list(range(963))
 
-    args.traj_classes = list(range(int(963/2), 963))
+    # args.traj_classes = list(range(int(963/2), 963))
+    args.classes = list(range(10))
 
-
+    args.traj_classes = list(range(int(5), 10))
 
     dataset = df.DatasetFactory.get_dataset(args.dataset, background=True, train=True, all=True)
     dataset_test = df.DatasetFactory.get_dataset(args.dataset, background=True, train=False, all=True)
@@ -51,11 +52,11 @@ def main(args):
 
     maml = MetaLearingClassification(args, config).to(device)
 
-    utils.freeze_layers(args.rln, maml)
+    utils.freeze_layers(args.rln, maml) # freeze layers
     
-    for step in range(args.steps):
+    for step in range(args.steps): #epoch
 
-        t1 = np.random.choice(args.traj_classes, args.tasks, replace=False)
+        t1 = np.random.choice(args.traj_classes, args.tasks, replace=False) #sample sine waves
 
         d_traj_iterators = []
         for t in t1:
@@ -63,12 +64,14 @@ def main(args):
 
         d_rand_iterator = sampler.get_complete_iterator()
 
+        # trajectory sampling
         x_spt, y_spt, x_qry, y_qry = maml.sample_training_data(d_traj_iterators, d_rand_iterator,
                                                                steps=args.update_step, reset=not args.no_reset)
         if torch.cuda.is_available():
             x_spt, y_spt, x_qry, y_qry = x_spt.cuda(), y_spt.cuda(), x_qry.cuda(), y_qry.cuda()
 
         accs, loss = maml(x_spt, y_spt, x_qry, y_qry)
+        print("epoch done")
 
         # Evaluation during training for sanity checks
         if step % 40 == 39:
@@ -78,6 +81,7 @@ def main(args):
             utils.log_accuracy(maml, my_experiment, iterator_test, device, writer, step)
             utils.log_accuracy(maml, my_experiment, iterator_train, device, writer, step)
 
+    	torch.save(maml.net, my_experiment.path + "omniglot_classifier.model")
 #
 if __name__ == '__main__':
     argparser = argparse.ArgumentParser()

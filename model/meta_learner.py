@@ -230,7 +230,7 @@ class MetaLearingClassification(nn.Module):
         # print(y_rand)
         meta_losses = [0 for _ in range(self.update_step + 1)]  # losses_q[i] is the loss on step i
         accuracy_meta_set = [0 for _ in range(self.update_step + 1)]
-
+        # print("SHAPE: ",len(meta_losses))
         # Doing a single inner update to get updated weights
         fast_weights = self.inner_update(x_traj[0], None, y_traj[0], True)
 
@@ -249,14 +249,15 @@ class MetaLearingClassification(nn.Module):
             classification_accuracy = self.eval_accuracy(last_layer_logits, y_rand[0])
             accuracy_meta_set[1] = accuracy_meta_set[1] + classification_accuracy
 
-        for k in range(1, self.update_step):
+        for k in range(0, self.update_step-1):
             # Doing inner updates using fast weights
             fast_weights = self.inner_update(x_traj[k], fast_weights, y_traj[k], True)
 
             # Computing meta-loss with respect to latest weights
             meta_loss, logits = self.meta_loss(x_rand[0], fast_weights, y_rand[0], False)
+            # print("ml ",type(meta_loss),meta_loss.shape)
             meta_losses[k + 1] += meta_loss
-
+            # print("mls ", type(meta_losses))
             # Computing accuracy on the meta and traj set for understanding the learning
             with torch.no_grad():
                 pred_q = F.softmax(logits, dim=1).argmax(dim=1)
@@ -265,12 +266,17 @@ class MetaLearingClassification(nn.Module):
 
         # Taking the meta gradient step
         self.optimizer.zero_grad()
-        meta_loss = meta_losses[-1]
+        meta_loss = meta_losses[-2]
+        # for item in meta_losses:
+        #     print(type(item))
+        # print(meta_loss)
+        # print("final: ", type(meta_loss))
         meta_loss.backward()
 
         self.clip_grad_params(self.net, norm=5)
 
         self.optimizer.step()
+        print("inner step done")
         accuracies = np.array(accuracy_meta_set) / len(x_rand[0])
 
         return accuracies, meta_losses
@@ -346,9 +352,9 @@ class MetaLearnerRegression(nn.Module):
         self.meta_lr = args.meta_lr
         self.update_step = args.update_step
 
-        self.net = Learner.Learner(config)
-        self.optimizer = optim.Adam(self.net.parameters(), lr=self.meta_lr)
-        self.meta_optim = torch.optim.lr_scheduler.MultiStepLR(self.optimizer, [1500, 2500, 3500], 0.3)
+        self.net = Learner.Learner(config) #this is the actual network architecture
+        self.optimizer = optim.Adam(self.net.parameters(), lr=self.meta_lr) #use Adam to optimie OML objetive
+        self.meta_optim = torch.optim.lr_scheduler.MultiStepLR(self.optimizer, [1500, 2500, 3500], 0.3) #decay learning rate based on epoch number
 
     def forward(self, x_traj, y_traj, x_rand, y_rand):
 
@@ -409,9 +415,9 @@ class MetaLearnerRegression(nn.Module):
         self.optimizer.zero_grad()
 
         loss_q = losses_q[k + 1]
-        loss_q.backward()
+        loss_q.backward() #calc gradient, spec. for random batch (the loss here quantifies interference)
 
-        self.optimizer.step()
+        self.optimizer.step() #take step with Adam to update the RLN, RLN, RLN!!!
 
         return losses_q
 
