@@ -50,7 +50,7 @@ def main(args):
 
     maml = MetaLearingClassification(args, config).to(device)
 
-    utils.freeze_layers(args.rln, maml) # freeze layers
+    utils.custom_freeze_layers(['net.vars.0','net.vars.1'], maml) # freeze layers
     
     for step in range(args.steps): #epoch
 

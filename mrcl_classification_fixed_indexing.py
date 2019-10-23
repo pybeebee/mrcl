@@ -10,7 +10,7 @@ import datasets.task_sampler as ts
 import model.modelfactory as mf
 import utils.utils as utils
 from experiment.experiment import experiment
-from model.meta_learner import MetaLearingClassification
+from model.meta_learner_fixed_indexing import MetaLearingClassification
 
 logger = logging.getLogger('experiment')
 
@@ -27,7 +27,6 @@ def main(args):
     args.classes = list(range(963))
 
     args.traj_classes = list(range(int(963/2), 963))
-  
 
     dataset = df.DatasetFactory.get_dataset(args.dataset, background=True, train=True, all=True)
     dataset_test = df.DatasetFactory.get_dataset(args.dataset, background=True, train=False, all=True)

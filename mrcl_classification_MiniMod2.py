@@ -10,7 +10,7 @@ import datasets.task_sampler as ts
 import model.modelfactory as mf
 import utils.utils as utils
 from experiment.experiment import experiment
-from model.meta_learner import MetaLearingClassification
+from model.meta_learner_MiniMod2 import MetaLearingClassification
 
 logger = logging.getLogger('experiment')
 
@@ -27,7 +27,7 @@ def main(args):
     args.classes = list(range(963))
 
     args.traj_classes = list(range(int(963/2), 963))
-  
+    
 
     dataset = df.DatasetFactory.get_dataset(args.dataset, background=True, train=True, all=True)
     dataset_test = df.DatasetFactory.get_dataset(args.dataset, background=True, train=False, all=True)
@@ -68,8 +68,11 @@ def main(args):
         if torch.cuda.is_available():
             x_spt, y_spt, x_qry, y_qry = x_spt.cuda(), y_spt.cuda(), x_qry.cuda(), y_qry.cuda()
 
-        accs, loss = maml(x_spt, y_spt, x_qry, y_qry)
-        print("epoch done")
+        if step==0:
+            prev_rand_loss = 2.**30
+
+        accs, loss = maml(x_spt, y_spt, x_qry, y_qry, prev_rand_loss)
+        prev_rand_loss = loss[-2]
 
         # Evaluation during training for sanity checks
         if step % 40 == 39:

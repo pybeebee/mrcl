@@ -119,16 +119,16 @@ def main(args):
         if torch.cuda.is_available():
             x_traj, y_traj, x_rand, y_rand = x_traj.cuda(), y_traj.cuda(), x_rand.cuda(), y_rand.cuda()
         
-        #predict on trajectory AND random data stream
-        # calls forward() method in MetaLearnerRegresssion class!!!
-        # Updates the RLN RLN RLN in the process!!! (STEP 4)
+        # if prev_loss > cur_loss:
+            #predict on trajectory AND random data stream
+            # calls forward() method in MetaLearnerRegresssion class!!!
+            # Updates the RLN RLN RLN in the process!!! (STEP 4)
         accs = maml(x_traj, y_traj, x_rand, y_rand) 
-
-        
-        # Compute gradients for this loss wrt initial parameters to update initial parameters
-        # Update initial paramteres theta, W?????
-        # Is tis the meta-update? HELP?!?!
-        # I THINK THIS IS THE UPDTE TO TLN TLN TLN IN STEP 4--> (STEP 4 END)
+        print(accs[-1])
+            # Compute gradients for this loss wrt initial parameters to update initial parameters
+            # Update initial paramteres theta, W?????
+            # Is tis the meta-update? HELP?!?!
+            # I THINK THIS IS THE UPDTE TO TLN TLN TLN IN STEP 4--> (STEP 4 END)
         maml.meta_optim.step() # STEP FOUR??? HELP
 
         # Monitoring
@@ -136,7 +136,7 @@ def main(args):
             for param_group in maml.optimizer.param_groups:
                 logger.info("Learning Rate at step %d = %s", step, str(param_group['lr']))
 
-        accuracy = accuracy * 0.95 + 0.05 * accs[-1] #"averaging" the accuracy #WHY DO DIS
+        accuracy = accuracy * 0.95 + 0.05 * accs[-1]
         if step % 5 == 0:
             writer.add_scalar('/metatrain/train/accuracy', accs[-1], step)
             writer.add_scalar('/metatrain/train/runningaccuracy', accuracy, step)
@@ -148,10 +148,10 @@ def main(args):
             for name, _ in maml.net.named_parameters():
                 counter += 1
 
-            for lrs in [args.update_lr]: #WhY HAVE MORE THAN ONE LERARNING RTE?? # USE 0.003, aka doing inner updates
+            for lrs in [args.update_lr]:
                 lr_results = {}
                 lr_results[lrs] = []
-                for temp in range(0, 20):
+                for temp in range(0, 20): #WUT IS DIS
                     t1 = np.random.choice(tasks, args.tasks, replace=False)
                     iterators = []
                     #
