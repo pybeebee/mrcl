@@ -5,7 +5,7 @@ import torch
 from torch import nn
 from torch import optim
 from torch.nn import functional as F
-
+import pdb
 import model.learner as Learner
 
 logger = logging.getLogger("experiment")
@@ -228,8 +228,8 @@ class MetaLearingClassification(nn.Module):
 
         # print(y_traj)
         # print(y_rand)
-        meta_losses = [0 for _ in range(self.update_step + 1)]  # losses_q[i] is the loss on step i
-        accuracy_meta_set = [0 for _ in range(self.update_step + 1)]
+        meta_losses = [0.0 for _ in range(self.update_step)]  # losses_q[i] is the loss on step i
+        accuracy_meta_set = [0.0 for _ in range(self.update_step)]
         # print("SHAPE: ",len(meta_losses))
         # Doing a single inner update to get updated weights
         fast_weights = self.inner_update(x_traj[0], None, y_traj[0], True)
@@ -249,7 +249,7 @@ class MetaLearingClassification(nn.Module):
             classification_accuracy = self.eval_accuracy(last_layer_logits, y_rand[0])
             accuracy_meta_set[1] = accuracy_meta_set[1] + classification_accuracy
 
-        for k in range(0, self.update_step-1):
+        for k in range(1, self.update_step-1):
             # Doing inner updates using fast weights
             fast_weights = self.inner_update(x_traj[k], fast_weights, y_traj[k], True)
 
@@ -266,7 +266,7 @@ class MetaLearingClassification(nn.Module):
 
         # Taking the meta gradient step
         self.optimizer.zero_grad()
-        meta_loss = meta_losses[-2]
+        meta_loss = meta_losses[-1]
         # for item in meta_losses:
         #     print(type(item))
         # print(meta_loss)
@@ -276,7 +276,6 @@ class MetaLearingClassification(nn.Module):
         self.clip_grad_params(self.net, norm=5)
 
         self.optimizer.step()
-        print("inner step done")
         accuracies = np.array(accuracy_meta_set) / len(x_rand[0])
 
         return accuracies, meta_losses

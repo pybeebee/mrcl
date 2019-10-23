@@ -69,7 +69,7 @@ def main(args):
             x_spt, y_spt, x_qry, y_qry = x_spt.cuda(), y_spt.cuda(), x_qry.cuda(), y_qry.cuda()
 
         accs, loss = maml(x_spt, y_spt, x_qry, y_qry)
-        print("epoch done")
+        #print("epoch done")
 
         # Evaluation during training for sanity checks
         if step % 40 == 39:
