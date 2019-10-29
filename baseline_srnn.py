@@ -26,7 +26,7 @@ def main(args):
 
     np.random.seed(args.seed)
 
-    my_experiment = experiment(args.name, args, "../results/")
+    my_experiment = experiment(args.name, args, "./results/")
 
     dataset = df.DatasetFactory.get_dataset(args.dataset)
 
@@ -42,7 +42,7 @@ def main(args):
 
     logger.info(str(args))
 
-    config = mf.ModelFactory.get_model("na", args.dataset)
+    config = mf.ModelFactory.get_model(args.model_type, args.dataset)
 
     maml = learner.Learner(config).to(device)
 
@@ -85,7 +85,11 @@ def main(args):
             opt.step()
             correct += (pred.argmax(1) == y).sum().float()/ len(y)
         logger.info("Accuracy at epoch %d = %s", e, str(correct/len(iterator)))
-        torch.save(maml, my_experiment.path + "model.net")
+        
+        if args.dataset =="omniglot":
+            torch.save(maml, my_experiment.path + "baseline_srnn_omniglot.net")
+        else:
+            torch.save(maml, my_experiment.path + "baseline_srnn_regression.net")
 
 
 if __name__ == '__main__':
@@ -94,6 +98,7 @@ if __name__ == '__main__':
     argparser.add_argument('--beta', type=float, help='epoch number', default=0.1)
     argparser.add_argument('--seed', type=int, help='epoch number', default=222)
     argparser.add_argument('--dataset', help='Name of experiment', default="omniglot")
+    argparser.add_argument('--model_type', help='Model type for regression experiments', default="old")
     argparser.add_argument("--l1", action="store_true")
     argparser.add_argument('--lr', type=float, help='task-level inner update learning rate', default=0.0001)
     argparser.add_argument('--classes', type=int, nargs='+', help='Total classes to use in training',

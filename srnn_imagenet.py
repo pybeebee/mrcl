@@ -27,7 +27,7 @@ def main(args):
 
     np.random.seed(args.seed)
 
-    my_experiment = experiment(args.name, args, "../results/")
+    my_experiment = experiment(args.name, args, "./results/")
 
     args.classes = list(range(64))
 
@@ -106,7 +106,7 @@ def main(args):
         #     logger.info("Accuracy Test at epoch %d = %s", e, str(correct / len(iterator_test)))
 
 
-        torch.save(maml, my_experiment.path + "model.net")
+        torch.save(maml, my_experiment.path + "srnn_imagenet.net")
 
 
 if __name__ == '__main__':

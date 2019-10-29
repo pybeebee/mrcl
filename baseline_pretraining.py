@@ -26,7 +26,7 @@ def main(args):
 
     np.random.seed(args.seed)
 
-    my_experiment = experiment(args.name, args, "../results/")
+    my_experiment = experiment(args.name, args, "./results/")
 
     dataset = df.DatasetFactory.get_dataset(args.dataset)
     dataset_test = df.DatasetFactory.get_dataset(args.dataset, train=False)
@@ -64,6 +64,7 @@ def main(args):
             img = img.to(device)
             y = y.to(device)
             pred = maml(img)
+            print("here")
             feature = maml(img, feature=True)
             loss_rep = torch.abs(feature).sum()
 
@@ -89,8 +90,8 @@ def main(args):
                 correct += (pred.argmax(1) == y).sum().float() / len(y)
             logger.info("Accuracy Test at epoch %d = %s", e, str(correct / len(iterator_test)))
 
-
-        torch.save(maml, my_experiment.path + "model.net")
+        if args.dataset=="omniglot":
+            torch.save(maml, my_experiment.path + "baseline_pretraining_omniglot.net")
 
 
 if __name__ == '__main__':

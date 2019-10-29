@@ -79,7 +79,7 @@ def main(args):
             utils.log_accuracy(maml, my_experiment, iterator_test, device, writer, step)
             utils.log_accuracy(maml, my_experiment, iterator_train, device, writer, step)
         
-        torch.save(maml.net, my_experiment.path + "omniglot_classifier_hinge.model")
+        torch.save(maml.net, my_experiment.path + "omniglot_hinge.model")
 
 #
 if __name__ == '__main__':

@@ -66,7 +66,7 @@ def main(args):
     torch.manual_seed(args.seed)
     torch.cuda.manual_seed_all(args.seed)
     np.random.seed(args.seed)
-    my_experiment = experiment(args.name, args, "../results/", commit_changes=args.commit)
+    my_experiment = experiment(args.name, args, "./results/", commit_changes=args.commit)
     writer = SummaryWriter(my_experiment.path + "tensorboard")
     print(args)
 
@@ -253,7 +253,7 @@ def main(args):
         print("Loss vector = ", loss_vector)
         my_experiment.results[str(lrs)] = str(loss_vector_results)
         my_experiment.store_json()
-    torch.save(maml.net, my_experiment.path + "learner.model")
+    torch.save(maml.net, my_experiment.path + "eval_regression_generated_model.model")
 
 
 # #

@@ -43,7 +43,7 @@ class ModelFactory():
                     ('linear', [num_actions, hidden_size * 5])
                 ]
 
-            elif model_type=="non-linear":
+            elif model_type=="nonlinear":
                 hidden_size = width
                 return [
                     ('linear', [hidden_size, in_channels]),

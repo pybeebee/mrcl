@@ -205,7 +205,7 @@ def main(args):
 
                 logger.info("Avg MSE LOSS  for lr %s = %s", str(lrs), str(np.mean(lr_results[lrs])))
 
-            torch.save(maml.net, my_experiment.path + "selectively_frozen_learner.model")
+            torch.save(maml.net, my_experiment.path + "regression_freezing.model")
 
 
 #

@@ -5,7 +5,7 @@ import torch
 from torch import nn
 from torch import optim
 from torch.nn import functional as F
-
+import pdb
 import model.learner as Learner
 
 logger = logging.getLogger("experiment")
@@ -218,7 +218,6 @@ class MetaLearingClassification(nn.Module):
 
     def forward(self, x_traj, y_traj, x_rand, y_rand):
         """
-
         :param x_traj:   Input data of sampled trajectory
         :param y_traj:   Ground truth of the sampled trajectory
         :param x_rand:   Input data of the random batch of data
@@ -228,9 +227,9 @@ class MetaLearingClassification(nn.Module):
 
         # print(y_traj)
         # print(y_rand)
-        meta_losses = [0 for _ in range(self.update_step + 1)]  # losses_q[i] is the loss on step i
-        accuracy_meta_set = [0 for _ in range(self.update_step + 1)]
-
+        meta_losses = [0.0 for _ in range(self.update_step)]  # losses_q[i] is the loss on step i
+        accuracy_meta_set = [0.0 for _ in range(self.update_step)]
+        # print("SHAPE: ",len(meta_losses))
         # Doing a single inner update to get updated weights
         fast_weights = self.inner_update(x_traj[0], None, y_traj[0], True)
 
@@ -249,15 +248,15 @@ class MetaLearingClassification(nn.Module):
             classification_accuracy = self.eval_accuracy(last_layer_logits, y_rand[0])
             accuracy_meta_set[1] = accuracy_meta_set[1] + classification_accuracy
 
-        for k in range(0, self.update_step-1):
-        # for k in range(1, self.update_step):
+        for k in range(1, self.update_step-1):
             # Doing inner updates using fast weights
             fast_weights = self.inner_update(x_traj[k], fast_weights, y_traj[k], True)
 
             # Computing meta-loss with respect to latest weights
             meta_loss, logits = self.meta_loss(x_rand[0], fast_weights, y_rand[0], False)
+            # print("ml ",type(meta_loss),meta_loss.shape)
             meta_losses[k + 1] += meta_loss
-
+            # print("mls ", type(meta_losses))
             # Computing accuracy on the meta and traj set for understanding the learning
             with torch.no_grad():
                 pred_q = F.softmax(logits, dim=1).argmax(dim=1)
@@ -266,21 +265,22 @@ class MetaLearingClassification(nn.Module):
 
         # Taking the meta gradient step
         self.optimizer.zero_grad()
-        meta_loss = meta_losses[-2]
-        # meta_loss = meta_losses[-1]
+        meta_loss = meta_losses[-1]
+        # for item in meta_losses:
+        #     print(type(item))
+        # print(meta_loss)
+        # print("final: ", type(meta_loss))
         meta_loss.backward()
 
         self.clip_grad_params(self.net, norm=5)
 
         self.optimizer.step()
-        print("inner step done")
         accuracies = np.array(accuracy_meta_set) / len(x_rand[0])
 
         return accuracies, meta_losses
 
     def finetune(self, x_traj, y_traj, x_rand, y_rand):
         """
-
         :param x_traj:   Input data of sampled trajectory
         :param y_traj:   Ground truth of the sampled trajectory
         :param x_rand:   Input data of the random batch of data
@@ -340,7 +340,6 @@ class MetaLearnerRegression(nn.Module):
 
     def __init__(self, args, config):
         """
-
         :param args:
         """
         super(MetaLearnerRegression, self).__init__()
@@ -363,7 +362,7 @@ class MetaLearnerRegression(nn.Module):
             for no, val in enumerate(y_traj[0, :, 1].long()):
                 logits_select.append(logits[no, val])
             logits = torch.stack(logits_select).unsqueeze(1)
-            loss = F.mse_loss(logits, y_traj[0, :, 0].unsqueeze(1))
+            loss = F.multi_margin_loss(logits, y_traj[0, :, 0].unsqueeze(1))
             grad = torch.autograd.grad(loss, self.net.parameters())
 
             fast_weights = list(
@@ -379,7 +378,7 @@ class MetaLearnerRegression(nn.Module):
                 for no, val in enumerate(y_rand[0, :, 1].long()):
                     logits_select.append(logits[no, val])
                 logits = torch.stack(logits_select).unsqueeze(1)
-                loss_q = F.mse_loss(logits, y_rand[0, :, 0].unsqueeze(1))
+                loss_q = F.multi_margin_loss(logits, y_rand[0, :, 0].unsqueeze(1))
                 losses_q[0] += loss_q
 
             for k in range(1, len(x_traj)):
@@ -390,7 +389,7 @@ class MetaLearnerRegression(nn.Module):
                     logits_select.append(logits[no, val])
                 logits = torch.stack(logits_select).unsqueeze(1)
 
-                loss = F.mse_loss(logits, y_traj[k, :, 0].unsqueeze(1))
+                loss = F.multi_margin_loss(logits, y_traj[k, :, 0].unsqueeze(1))
                 grad = torch.autograd.grad(loss, fast_weights)
                 fast_weights = list(
                     map(lambda p: p[1] - self.update_lr * p[0] if p[1].learn else p[1], zip(grad, fast_weights)))
@@ -405,7 +404,7 @@ class MetaLearnerRegression(nn.Module):
                 for no, val in enumerate(y_rand[0, 0:int((k + 1) * len(x_rand[0]) / len(x_traj)), 1].long()):
                     logits_select.append(logits_q[no, val])
                 logits = torch.stack(logits_select).unsqueeze(1)
-                loss_q = F.mse_loss(logits, y_rand[0, 0:int((k + 1) * len(x_rand[0]) / len(x_traj)), 0].unsqueeze(1))
+                loss_q = F.multi_margin_loss(logits, y_rand[0, 0:int((k + 1) * len(x_rand[0]) / len(x_traj)), 0].unsqueeze(1))
 
                 losses_q[k + 1] += loss_q
 

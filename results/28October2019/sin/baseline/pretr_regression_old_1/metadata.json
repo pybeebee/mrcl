@@ -1,0 +1,54 @@
+{
+    "command_args": "python baseline_pretraining_sin.py --model_type old --name pretr_regression_old --baseline",
+    "dir": "./results/",
+    "full_path": "./results/28October2019/sin/baseline/pretr_regression_old",
+    "name": "sin/baseline/pretr_regression_old",
+    "params": {
+        "baseline": true,
+        "capacity": 400,
+        "classes": [
+            0,
+            1,
+            2,
+            3,
+            4
+        ],
+        "commit": false,
+        "dataset": "Sin",
+        "epoch": 20000,
+        "lr": 0.0001,
+        "meta_lr": 0.0001,
+        "model_type": "old",
+        "n_way": 10,
+        "name": "sin/baseline/pretr_regression_old",
+        "no_freeze": false,
+        "seed": 1000,
+        "seeds": [
+            10
+        ],
+        "tasks": 10,
+        "total_frozen": 4,
+        "update_lr": 0.003,
+        "update_step": 5,
+        "update_step_test": 10,
+        "width": 300
+    },
+    "path": "./results/28October2019/sin/baseline/pretr_regression_old_1/",
+    "results": {
+        "Temp Results": [
+            [
+                1,
+                2,
+                3,
+                4
+            ],
+            [
+                5,
+                6,
+                2,
+                6
+            ]
+        ]
+    },
+    "root_folder": "./results/28October2019"
+}

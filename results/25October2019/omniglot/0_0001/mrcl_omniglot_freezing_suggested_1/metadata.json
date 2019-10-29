@@ -1,0 +1,40 @@
+{
+    "command_args": "python mrcl_classification_freezing_control.py --rln 6 --update_lr 0.03 --name mrcl_omniglot --update_step 20 --steps 15000 --name mrcl_omniglot_freezing_suggested",
+    "dir": "./results/",
+    "full_path": "./results/25October2019/omniglot/0_0001/mrcl_omniglot_freezing_suggested",
+    "name": "omniglot/0_0001/mrcl_omniglot_freezing_suggested",
+    "params": {
+        "commit": false,
+        "dataset": "omniglot",
+        "meta_lr": 0.0001,
+        "name": "omniglot/0_0001/mrcl_omniglot_freezing_suggested",
+        "no_reset": false,
+        "rln": 6,
+        "seed": 10000,
+        "seeds": [
+            10
+        ],
+        "steps": 15000,
+        "tasks": 1,
+        "update_lr": 0.03,
+        "update_step": 20
+    },
+    "path": "./results/25October2019/omniglot/0_0001/mrcl_omniglot_freezing_suggested_1/",
+    "results": {
+        "Temp Results": [
+            [
+                1,
+                2,
+                3,
+                4
+            ],
+            [
+                5,
+                6,
+                2,
+                6
+            ]
+        ]
+    },
+    "root_folder": "./results/25October2019"
+}

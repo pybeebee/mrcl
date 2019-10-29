@@ -1,0 +1,41 @@
+{
+    "command_args": "python baseline_srnn.py --dataset Sin --model_type old --name srnn_regression",
+    "dir": "./results/",
+    "full_path": "./results/28October2019/Sin/baseline/30/srnn_regression",
+    "name": "Sin/baseline/30/srnn_regression",
+    "params": {
+        "beta": 0.1,
+        "classes": [
+            0,
+            1,
+            2,
+            3,
+            4
+        ],
+        "dataset": "Sin",
+        "epoch": 30,
+        "l1": false,
+        "lr": 0.0001,
+        "model_type": "old",
+        "name": "Sin/baseline/30/srnn_regression",
+        "seed": 222
+    },
+    "path": "./results/28October2019/Sin/baseline/30/srnn_regression_0/",
+    "results": {
+        "Temp Results": [
+            [
+                1,
+                2,
+                3,
+                4
+            ],
+            [
+                5,
+                6,
+                2,
+                6
+            ]
+        ]
+    },
+    "root_folder": "./results/28October2019"
+}

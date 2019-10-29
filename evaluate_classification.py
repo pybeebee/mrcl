@@ -23,7 +23,7 @@ def main(args):
     np.random.seed(args.seed)
     random.seed(args.seed)
 
-    my_experiment = experiment(args.name, args, "../results/", args.commit)
+    my_experiment = experiment(args.name, args, "./results/", args.commit)
     writer = SummaryWriter(my_experiment.path + "tensorboard")
 
     logger = logging.getLogger('experiment')
@@ -84,6 +84,7 @@ def main(args):
 
                     print(lr)
                     # for lr in [0.001, 0.0003, 0.0001, 0.00003, 0.00001]:
+                    
                     maml = torch.load(args.model, map_location='cpu')
 
                     if args.scratch:

@@ -16,6 +16,8 @@ logger = logging.getLogger('experiment')
 
 
 def main(args):
+    accs = -2.**30
+    loss = [2.**30,2.**30]
     utils.set_seed(args.seed)
 
     my_experiment = experiment(args.name, args, "./results/", commit_changes=args.commit)
@@ -24,12 +26,10 @@ def main(args):
     logger = logging.getLogger('experiment')
 
     # Using first 963 classes of the omniglot as the meta-training set
-    # args.classes = list(range(963))
+    args.classes = list(range(963))
 
-    # args.traj_classes = list(range(int(963/2), 963))
-    args.classes = list(range(10))
-
-    args.traj_classes = list(range(int(5), 10))
+    args.traj_classes = list(range(int(963/2), 963))
+  
 
     dataset = df.DatasetFactory.get_dataset(args.dataset, background=True, train=True, all=True)
     dataset_test = df.DatasetFactory.get_dataset(args.dataset, background=True, train=False, all=True)
@@ -70,8 +70,7 @@ def main(args):
         if torch.cuda.is_available():
             x_spt, y_spt, x_qry, y_qry = x_spt.cuda(), y_spt.cuda(), x_qry.cuda(), y_qry.cuda()
 
-        accs, loss = maml(x_spt, y_spt, x_qry, y_qry)
-        print("epoch done")
+        accs, loss = maml(x_spt, y_spt, x_qry, y_qry,accs,loss,args)
 
         # Evaluation during training for sanity checks
         if step % 40 == 39:
@@ -81,7 +80,12 @@ def main(args):
             utils.log_accuracy(maml, my_experiment, iterator_test, device, writer, step)
             utils.log_accuracy(maml, my_experiment, iterator_train, device, writer, step)
 
-    	torch.save(maml.net, my_experiment.path + "omniglot_classifier.model")
+        if args.smart and args.use_mini:
+            torch.save(maml.net, my_experiment.path + "omniglot_smart_little.model")
+        elif args.smart and not args.use_mini:
+            torch.save(maml.net, my_experiment.path + "omniglot_smart_big.model")
+        else:
+            torch.save(maml.net, my_experiment.path + "omniglot_model.model")
 #
 if __name__ == '__main__':
     argparser = argparse.ArgumentParser()
@@ -97,6 +101,9 @@ if __name__ == '__main__':
     argparser.add_argument("--commit", action="store_true")
     argparser.add_argument("--no-reset", action="store_true")
     argparser.add_argument("--rln", type=int, default=6)
+    argparser.add_argument("--smart", type=bool, default=False)
+    argparser.add_argument("--use_mini", type=bool, default=False)
+    argparser.add_argument('--mini_traj_proportion', type=float, help='proportion of big support to be used in little support', default=0.8)
     args = argparser.parse_args()
 
     args.name = "/".join([args.dataset, str(args.meta_lr).replace(".", "_"), args.name])

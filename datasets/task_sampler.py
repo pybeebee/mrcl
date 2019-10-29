@@ -12,9 +12,9 @@ class SamplerFactory:
         pass
 
     @staticmethod
-    def get_sampler(dataset, tasks, trainset, testset=None, capacity=None):
+    def get_sampler(dataset, tasks, trainset, testset=None, capacity=None,mine=False):
         if "omni" in dataset:
-            return OmniglotSampler(tasks, trainset, testset)
+            return OmniglotSampler(tasks, trainset, testset,mine)
         elif "Sin" == dataset:
             return SineSampler(tasks, capacity=capacity)
         elif "SinBaseline" in dataset:
@@ -204,10 +204,15 @@ class SampleSine:
 
 class OmniglotSampler:
     # Class to sample tasks
-    def __init__(self, tasks, trainset, testset):
+    def __init__(self, tasks, trainset, testset,mine=False):
         self.tasks = tasks
         self.task_sampler = SampleOmni(trainset, testset)
-        self.task_sampler.add_complete_iteraetor(list(range(0, int(len(self.tasks)/2))))
+        if mine==True:
+            self.task_sampler.add_complete_iteraetor_mine(list(range(0, int(len(self.tasks)))),trainset)
+            # self.task_sampler.add_complete_iteraetor_mine(list(range(0, int(len(self.tasks)/2))),trainset)
+        else:
+            self.task_sampler.add_complete_iteraetor(list(range(0, int(len(self.tasks)))))
+            # self.task_sampler.add_complete_iteraetor(list(range(0, int(len(self.tasks)/2))))
 
     def get_complete_iterator(self):
         return self.task_sampler.complete_iterator
@@ -220,6 +225,9 @@ class OmniglotSampler:
 
     def filter_upto(self, task):
         return self.task_sampler.filter_upto(task)
+
+    def sample_task_mine(self, t, traj_dataset,train=True):
+        return self.task_sampler.get_mine(t, train,traj_dataset)
 
     def sample_task(self, t, train=True):
         return self.task_sampler.get(t, train)
@@ -272,6 +280,20 @@ class SampleOmni:
         self.iterators = {}
         self.test_iterators = {}
 
+    def add_complete_iteraetor_mine(self, tasks,traj_dataset):
+
+        train_iterator = torch.utils.data.DataLoader(traj_dataset,
+                                                     batch_size=10,
+                                                     shuffle=True, num_workers=1)
+        self.complete_iterator = train_iterator
+        logger.info("Len of complete iterator = %d", len(self.complete_iterator) * 256)
+
+        train_iterator2 = torch.utils.data.DataLoader(traj_dataset,
+                                                      batch_size=1,
+                                                      shuffle=True, num_workers=1)
+
+        self.another_complete_iterator = train_iterator2
+    
     def add_complete_iteraetor(self, tasks):
         dataset = self.get_task_trainset(tasks, True)
         # dataset = self.get_task_testset(tasks)
@@ -287,6 +309,14 @@ class SampleOmni:
 
         self.another_complete_iterator = train_iterator2
 
+    def add_task_iterator_mine(self, task,traj_dataset):
+        train_iterator = torch.utils.data.DataLoader(traj_dataset,
+                                                     batch_size=1,
+                                                     shuffle=True, num_workers=1)
+        self.iterators[task] = train_iterator
+        print("Task %d has been added to the list" % task)
+        return train_iterator
+
     def add_task_iterator(self, task, train):
         dataset = self.get_task_trainset([task], train)
 
@@ -296,6 +326,20 @@ class SampleOmni:
         self.iterators[task] = train_iterator
         print("Task %d has been added to the list" % task)
         return train_iterator
+
+    def get_mine(self, tasks, train,traj_dataset):
+        if train:
+            for task in tasks:
+                if task in self.iterators:
+                    return self.iterators[task]
+                else:
+                    return self.add_task_iterator_mine(task, traj_dataset)
+        else:
+            for task in tasks:
+                if tasks in self.test_iterators:
+                    return self.test_iterators[task]
+                else:
+                    return self.add_task_iterator_mine(task, traj_dataset)
 
     def get(self, tasks, train):
         if train:

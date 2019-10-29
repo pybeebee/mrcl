@@ -39,6 +39,24 @@ def freeze_layers(layers_to_freeze, maml):
     for a in list_of_names:
         logger.info("TLN layer = %s", a[0])
 
+def custom_freeze_layers(list_of_layers_to_freeze, maml):
+    # Assumes list_of_layers_to_freeze is of the form ["net.vars.0", "net.vars.1", etc]
+    for name, param in maml.named_parameters():
+        param.learn = True
+
+    for name, param in maml.net.named_parameters():
+        param.learn = True
+
+    for name, param in maml.named_parameters():
+        if name in list_of_layers_to_freeze:
+            logger.info("RLN layer %s", str(name))
+            param.learn = False
+
+    list_of_names = list(filter(lambda x: x[1].learn, maml.named_parameters()))
+
+    for a in list_of_names:
+        logger.info("TLN layer = %s", a[0])
+
 def log_accuracy(maml, my_experiment, iterator_test, device, writer, step):
     correct = 0
     torch.save(maml.net, my_experiment.path + "learner.model")

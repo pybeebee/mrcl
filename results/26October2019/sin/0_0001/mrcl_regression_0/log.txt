@@ -1,0 +1,113 @@
+experiment  : INFO     MetaLearnerRegression(
+  (net): Learner(
+    linear:(in:11, out:300)
+    relu:(True,)
+    linear:(in:300, out:300)
+    relu:(True,)
+    linear:(in:300, out:300)
+    relu:(True,)
+    linear:(in:300, out:300)
+    relu:(True,)
+    linear:(in:300, out:300)
+    relu:(True,)
+    linear:(in:300, out:900)
+    relu:(True,)
+    rep
+    linear:(in:900, out:300)
+    relu:(True,)
+    linear:(in:300, out:300)
+    relu:(True,)
+    linear:(in:300, out:1)
+    
+    (vars): ParameterList(
+        (0): Parameter containing: [torch.FloatTensor of size 300x11]
+        (1): Parameter containing: [torch.FloatTensor of size 300]
+        (2): Parameter containing: [torch.FloatTensor of size 300x300]
+        (3): Parameter containing: [torch.FloatTensor of size 300]
+        (4): Parameter containing: [torch.FloatTensor of size 300x300]
+        (5): Parameter containing: [torch.FloatTensor of size 300]
+        (6): Parameter containing: [torch.FloatTensor of size 300x300]
+        (7): Parameter containing: [torch.FloatTensor of size 300]
+        (8): Parameter containing: [torch.FloatTensor of size 300x300]
+        (9): Parameter containing: [torch.FloatTensor of size 300]
+        (10): Parameter containing: [torch.FloatTensor of size 900x300]
+        (11): Parameter containing: [torch.FloatTensor of size 900]
+        (12): Parameter containing: [torch.FloatTensor of size 300x900]
+        (13): Parameter containing: [torch.FloatTensor of size 300]
+        (14): Parameter containing: [torch.FloatTensor of size 300x300]
+        (15): Parameter containing: [torch.FloatTensor of size 300]
+        (16): Parameter containing: [torch.FloatTensor of size 1x300]
+        (17): Parameter containing: [torch.FloatTensor of size 1]
+    )
+    (vars_bn): ParameterList()
+  )
+)
+experiment  : INFO     Total trainable tensors: 996601
+experiment  : INFO     Frozen layers = net.vars.0 net.vars.1 net.vars.2 net.vars.3 net.vars.4 net.vars.5 net.vars.6 net.vars.7 net.vars.8 net.vars.9 net.vars.10 net.vars.11
+experiment  : INFO     net.vars.0
+experiment  : INFO     Freeezing name net.vars.0
+experiment  : INFO     True
+experiment  : INFO     net.vars.1
+experiment  : INFO     Freeezing name net.vars.1
+experiment  : INFO     True
+experiment  : INFO     net.vars.2
+experiment  : INFO     Freeezing name net.vars.2
+experiment  : INFO     True
+experiment  : INFO     net.vars.3
+experiment  : INFO     Freeezing name net.vars.3
+experiment  : INFO     True
+experiment  : INFO     net.vars.4
+experiment  : INFO     Freeezing name net.vars.4
+experiment  : INFO     True
+experiment  : INFO     net.vars.5
+experiment  : INFO     Freeezing name net.vars.5
+experiment  : INFO     True
+experiment  : INFO     net.vars.6
+experiment  : INFO     Freeezing name net.vars.6
+experiment  : INFO     True
+experiment  : INFO     net.vars.7
+experiment  : INFO     Freeezing name net.vars.7
+experiment  : INFO     True
+experiment  : INFO     net.vars.8
+experiment  : INFO     Freeezing name net.vars.8
+experiment  : INFO     True
+experiment  : INFO     net.vars.9
+experiment  : INFO     Freeezing name net.vars.9
+experiment  : INFO     True
+experiment  : INFO     net.vars.10
+experiment  : INFO     Freeezing name net.vars.10
+experiment  : INFO     True
+experiment  : INFO     net.vars.11
+experiment  : INFO     Freeezing name net.vars.11
+experiment  : INFO     True
+experiment  : INFO     net.vars.12
+experiment  : INFO     net.vars.13
+experiment  : INFO     net.vars.14
+experiment  : INFO     net.vars.15
+experiment  : INFO     net.vars.16
+experiment  : INFO     net.vars.17
+experiment  : INFO     vars.0
+experiment  : INFO     vars.1
+experiment  : INFO     vars.2
+experiment  : INFO     vars.3
+experiment  : INFO     vars.4
+experiment  : INFO     vars.5
+experiment  : INFO     vars.6
+experiment  : INFO     vars.7
+experiment  : INFO     vars.8
+experiment  : INFO     vars.9
+experiment  : INFO     vars.10
+experiment  : INFO     vars.11
+experiment  : INFO     vars.12
+experiment  : INFO     vars.13
+experiment  : INFO     vars.14
+experiment  : INFO     vars.15
+experiment  : INFO     vars.16
+experiment  : INFO     vars.17
+experiment  : INFO     Learning Rate at step 0 = 0.0001
+experiment  : INFO     Running average of accuracy = tensor(0.1628, grad_fn=<AddBackward0>)
+experiment  : INFO     step: 0 	 training acc (first, last) tensor(6.4494),tensor(3.2563, grad_fn=<AddBackward0>)
+experiment  : INFO     Running average of accuracy = tensor(1.1641, grad_fn=<AddBackward0>)
+experiment  : INFO     step: 5 	 training acc (first, last) tensor(5.3088),tensor(3.1595, grad_fn=<AddBackward0>)
+experiment  : INFO     Running average of accuracy = tensor(1.5964, grad_fn=<AddBackward0>)
+experiment  : INFO     step: 10 	 training acc (first, last) tensor(5.0537),tensor(2.1404, grad_fn=<AddBackward0>)

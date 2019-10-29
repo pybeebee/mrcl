@@ -48,6 +48,7 @@ def construct_set(iterators, sampler, steps):
 
 def main(args):
     # Set random seeds
+    old_losses = [2.**30,2**30]
     torch.manual_seed(args.seed)
     torch.cuda.manual_seed_all(args.seed)
     np.random.seed(args.seed)
@@ -122,7 +123,7 @@ def main(args):
         #predict on trajectory AND random data stream
         # calls forward() method in MetaLearnerRegresssion class!!!
         # Updates the RLN RLN RLN in the process!!! (STEP 4)
-        accs = maml(x_traj, y_traj, x_rand, y_rand) 
+        accs = maml(x_traj, y_traj, x_rand, y_rand,old_losses,args) 
 
         
         # Compute gradients for this loss wrt initial parameters to update initial parameters
@@ -204,7 +205,12 @@ def main(args):
 
                 logger.info("Avg MSE LOSS  for lr %s = %s", str(lrs), str(np.mean(lr_results[lrs])))
 
-            torch.save(maml.net, my_experiment.path + "learner.model")
+        if args.smart and args.use_mini:
+            torch.save(maml.net, my_experiment.path + "regression_smart_little.model")
+        elif args.smart and not args.use_mini:
+            torch.save(maml.net, my_experiment.path + "regression_smart_big.model")
+        else:
+            torch.save(maml.net, my_experiment.path + "regression_model.model")
 
 
 #
@@ -223,6 +229,9 @@ if __name__ == '__main__':
     argparser.add_argument("--commit", action="store_true")
     argparser.add_argument("--width", type=int, default=300)
     argparser.add_argument("--rln", type=int, default=6)
+    argparser.add_argument("--smart", type=bool, default=False)
+    argparser.add_argument("--use_mini", action="store_true")
+    argparser.add_argument('--mini_traj_proportion', type=float, help='proportion of big support to be used in little support', default=0.8)
     args = argparser.parse_args()
     #
 

@@ -1,0 +1,95 @@
+experiment  : INFO     MetaLearnerRegression(
+  (net): Learner(
+    linear:(in:11, out:300)
+    relu:(True,)
+    linear:(in:300, out:300)
+    relu:(True,)
+    linear:(in:300, out:300)
+    relu:(True,)
+    linear:(in:300, out:1500)
+    relu:(True,)
+    rep
+    linear:(in:1500, out:30)
+    
+    (vars): ParameterList(
+        (0): Parameter containing: [torch.FloatTensor of size 300x11]
+        (1): Parameter containing: [torch.FloatTensor of size 300]
+        (2): Parameter containing: [torch.FloatTensor of size 300x300]
+        (3): Parameter containing: [torch.FloatTensor of size 300]
+        (4): Parameter containing: [torch.FloatTensor of size 300x300]
+        (5): Parameter containing: [torch.FloatTensor of size 300]
+        (6): Parameter containing: [torch.FloatTensor of size 1500x300]
+        (7): Parameter containing: [torch.FloatTensor of size 1500]
+        (8): Parameter containing: [torch.FloatTensor of size 30x1500]
+        (9): Parameter containing: [torch.FloatTensor of size 30]
+    )
+    (vars_bn): ParameterList()
+  )
+)
+experiment  : INFO     Total trainable tensors: 680730
+experiment  : INFO     Frozen layers = net.vars.0 net.vars.1 net.vars.2 net.vars.3 net.vars.4 net.vars.5 net.vars.6 net.vars.7
+experiment  : INFO     Task 0 has been added to the list with phase 0.361305 and amp 3.367948
+experiment  : INFO     Task 1 has been added to the list with phase 0.667063 and amp 4.462373
+experiment  : INFO     Task 2 has been added to the list with phase 2.644406 and amp 1.265661
+experiment  : INFO     Task 3 has been added to the list with phase 0.572576 and amp 2.060771
+experiment  : INFO     Task 4 has been added to the list with phase 2.992821 and amp 4.526686
+experiment  : INFO     Task 5 has been added to the list with phase 3.085130 and amp 0.244908
+experiment  : INFO     Task 6 has been added to the list with phase 0.110288 and amp 1.909385
+experiment  : INFO     Task 7 has been added to the list with phase 1.740716 and amp 3.928415
+experiment  : INFO     Task 8 has been added to the list with phase 0.234227 and amp 0.152109
+experiment  : INFO     Task 9 has been added to the list with phase 1.250998 and amp 3.589626
+experiment  : INFO     Running average of accuracy = 0.3634277582168579
+experiment  : INFO     Task 10 has been added to the list with phase 1.622877 and amp 2.676177
+experiment  : INFO     Task 11 has been added to the list with phase 2.487184 and amp 3.558894
+experiment  : INFO     Task 12 has been added to the list with phase 1.923551 and amp 2.775893
+experiment  : INFO     Task 13 has been added to the list with phase 2.061418 and amp 1.138103
+experiment  : INFO     Task 14 has been added to the list with phase 1.831009 and amp 0.472441
+experiment  : INFO     Task 15 has been added to the list with phase 0.908398 and amp 3.179013
+experiment  : INFO     Task 16 has been added to the list with phase 1.208015 and amp 0.855395
+experiment  : INFO     Task 17 has been added to the list with phase 0.970180 and amp 2.793343
+experiment  : INFO     Task 18 has been added to the list with phase 1.759260 and amp 4.968478
+experiment  : INFO     Task 19 has been added to the list with phase 2.103061 and amp 4.402712
+experiment  : INFO     Running average of accuracy = 0.6074835658073425
+experiment  : INFO     Task 20 has been added to the list with phase 2.348366 and amp 5.046717
+experiment  : INFO     Task 21 has been added to the list with phase 0.843098 and amp 4.862630
+experiment  : INFO     Task 22 has been added to the list with phase 2.067748 and amp 0.329388
+experiment  : INFO     Task 23 has been added to the list with phase 1.739216 and amp 1.561133
+experiment  : INFO     Task 24 has been added to the list with phase 3.025376 and amp 1.355070
+experiment  : INFO     Task 25 has been added to the list with phase 1.439027 and amp 0.754423
+experiment  : INFO     Task 26 has been added to the list with phase 2.895909 and amp 0.955651
+experiment  : INFO     Task 27 has been added to the list with phase 2.834581 and amp 4.241932
+experiment  : INFO     Task 28 has been added to the list with phase 0.971154 and amp 4.808821
+experiment  : INFO     Task 29 has been added to the list with phase 1.698296 and amp 4.728102
+experiment  : INFO     Running average of accuracy = 0.8495611548423767
+experiment  : INFO     Task 30 has been added to the list with phase 2.643300 and amp 0.353740
+experiment  : INFO     Task 31 has been added to the list with phase 2.610436 and amp 0.329486
+experiment  : INFO     Task 32 has been added to the list with phase 2.778306 and amp 0.322499
+experiment  : INFO     Task 33 has been added to the list with phase 2.106362 and amp 1.341684
+experiment  : INFO     Task 34 has been added to the list with phase 2.551306 and amp 3.284845
+experiment  : INFO     Task 35 has been added to the list with phase 2.640935 and amp 2.635063
+experiment  : INFO     Task 36 has been added to the list with phase 2.235980 and amp 4.021781
+experiment  : INFO     Task 37 has been added to the list with phase 1.143005 and amp 1.419439
+experiment  : INFO     Task 38 has been added to the list with phase 1.088883 and amp 3.249603
+experiment  : INFO     Task 39 has been added to the list with phase 1.453648 and amp 3.252632
+experiment  : INFO     Running average of accuracy = 1.0057860612869263
+experiment  : INFO     Task 40 has been added to the list with phase 3.019625 and amp 4.176321
+experiment  : INFO     Task 41 has been added to the list with phase 1.589412 and amp 3.043641
+experiment  : INFO     Task 42 has been added to the list with phase 2.745404 and amp 3.469349
+experiment  : INFO     Task 43 has been added to the list with phase 2.827990 and amp 0.863418
+experiment  : INFO     Task 44 has been added to the list with phase 1.273777 and amp 0.612315
+experiment  : INFO     Task 45 has been added to the list with phase 0.084343 and amp 3.094656
+experiment  : INFO     Task 46 has been added to the list with phase 1.759369 and amp 1.021614
+experiment  : INFO     Task 47 has been added to the list with phase 0.332082 and amp 3.718598
+experiment  : INFO     Task 48 has been added to the list with phase 0.749374 and amp 2.146494
+experiment  : INFO     Task 49 has been added to the list with phase 1.188719 and amp 1.101808
+experiment  : INFO     Running average of accuracy = 1.2270110845565796
+experiment  : INFO     Task 50 has been added to the list with phase 0.074564 and amp 3.214027
+experiment  : INFO     Task 51 has been added to the list with phase 2.973904 and amp 3.679265
+experiment  : INFO     Task 52 has been added to the list with phase 2.681662 and amp 0.472727
+experiment  : INFO     Task 53 has been added to the list with phase 2.607788 and amp 1.462431
+experiment  : INFO     Task 54 has been added to the list with phase 0.605842 and amp 2.197678
+experiment  : INFO     Task 55 has been added to the list with phase 1.997898 and amp 1.188908
+experiment  : INFO     Task 56 has been added to the list with phase 2.864011 and amp 4.014454
+experiment  : INFO     Task 57 has been added to the list with phase 2.543622 and amp 0.232040
+experiment  : INFO     Task 58 has been added to the list with phase 0.224715 and amp 2.615372
+experiment  : INFO     Task 59 has been added to the list with phase 1.013695 and amp 2.706028

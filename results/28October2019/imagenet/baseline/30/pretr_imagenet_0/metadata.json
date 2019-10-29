@@ -1,0 +1,44 @@
+{
+    "command_args": "python baseline_pretraining_imagenet.py --name pretr_imagenet",
+    "dir": "./results/",
+    "full_path": "./results/28October2019/imagenet/baseline/30/pretr_imagenet",
+    "name": "imagenet/baseline/30/pretr_imagenet",
+    "params": {
+        "classes": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9
+        ],
+        "dataset": "imagenet",
+        "dataset_path": "imagenet",
+        "epoch": 30,
+        "lr": 0.0001,
+        "name": "imagenet/baseline/30/pretr_imagenet",
+        "seed": 222
+    },
+    "path": "./results/28October2019/imagenet/baseline/30/pretr_imagenet_0/",
+    "results": {
+        "Temp Results": [
+            [
+                1,
+                2,
+                3,
+                4
+            ],
+            [
+                5,
+                6,
+                2,
+                6
+            ]
+        ]
+    },
+    "root_folder": "./results/28October2019"
+}

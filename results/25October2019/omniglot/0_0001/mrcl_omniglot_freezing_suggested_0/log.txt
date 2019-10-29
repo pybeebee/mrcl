@@ -1,0 +1,17 @@
+experiment  : INFO     [32mLen of complete iterator = 493056[0m
+experiment  : INFO     [32mRLN layer net.vars.0[0m
+experiment  : INFO     [32mRLN layer net.vars.1[0m
+experiment  : INFO     [32mTLN layer = net.vars.2[0m
+experiment  : INFO     [32mTLN layer = net.vars.3[0m
+experiment  : INFO     [32mTLN layer = net.vars.4[0m
+experiment  : INFO     [32mTLN layer = net.vars.5[0m
+experiment  : INFO     [32mTLN layer = net.vars.6[0m
+experiment  : INFO     [32mTLN layer = net.vars.7[0m
+experiment  : INFO     [32mTLN layer = net.vars.8[0m
+experiment  : INFO     [32mTLN layer = net.vars.9[0m
+experiment  : INFO     [32mTLN layer = net.vars.10[0m
+experiment  : INFO     [32mTLN layer = net.vars.11[0m
+experiment  : INFO     [32mTLN layer = net.vars.12[0m
+experiment  : INFO     [32mTLN layer = net.vars.13[0m
+experiment  : INFO     [32mTLN layer = net.vars.14[0m
+experiment  : INFO     [32mTLN layer = net.vars.15[0m

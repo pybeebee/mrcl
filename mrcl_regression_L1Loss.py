@@ -103,7 +103,6 @@ def main(args):
                     logger.info("Freeezing name %s", str(name))
                     param.learn = False
                     logger.info(str(param.requires_grad))
-        print("Done freezing")
         # randomly seelect the specified numer of tasks from list of all tasks
         t1 = np.random.choice(tasks, args.tasks, replace=False) #sample WITHOUT replacement
 
@@ -117,19 +116,16 @@ def main(args):
         if torch.cuda.is_available():
             x_traj, y_traj, x_rand, y_rand = x_traj.cuda(), y_traj.cuda(), x_rand.cuda(), y_rand.cuda()
         
-        print("Big trajectory sampled")
         #predict on trajectory AND random data stream
         # calls forward() method in MetaLearnerRegresssion class!!!
         # Updates the RLN RLN RLN in the process!!! (STEP 4)
         accs = maml(x_traj, y_traj, x_rand, y_rand) 
-        print("Step 4 RLN update complete")
         
         # Compute gradients for this loss wrt initial parameters to update initial parameters
         # Update initial paramteres theta, W?????
         # Is tis the meta-update? HELP?!?!
         # I THINK THIS IS THE UPDTE TO TLN TLN TLN IN STEP 4--> (STEP 4 END)
         maml.meta_optim.step() # STEP FOUR??? HELP
-        print("Step 4 TLN update complete")
 
         # Monitoring
         if step in [0, 2000, 3000, 4000]:
@@ -176,7 +172,6 @@ def main(args):
                     #Do k gradient updates on the TLN (W's), using MSE loss SWITCHED and 0.003 LR
                     # This is the INNER UPDATE I THINK!!!
                     for k in range(len(x_traj)): 
-                        print("Iteration: ",k)
                         logits = net(x_traj[k], None, bn_training=False)
 
                         logits_select = []
@@ -189,7 +184,6 @@ def main(args):
                         optimizer.zero_grad()
                         loss.backward()
                         optimizer.step() #UPDATE THE TLN
-                        print("Step 2 Inner TLN Update done")
 
                     #STep 3 of flowchart
                     # Use updated network to compute loss on random batch, add to the list of losses/loss results
@@ -203,13 +197,10 @@ def main(args):
                         logits = torch.stack(logits_select).unsqueeze(1)
                         loss_q = F.l1_loss(logits, y_rand[0, :, 0].unsqueeze(1))
                         lr_results[lrs].append(loss_q.item())
-                        print("calculating step 3, random batch loss")
-                        print("L1 loss: ",loss_q.item())
-                    print("Step 3 random batch loss calculation complete")
 
                 logger.info("Avg L1 LOSS  for lr %s = %s", str(lrs), str(np.mean(lr_results[lrs])))
 
-            torch.save(maml.net, my_experiment.path +"L1loss.model")
+            torch.save(maml.net, my_experiment.path +"regression_L1.model")
 
 
 #
