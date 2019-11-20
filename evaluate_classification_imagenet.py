@@ -225,9 +225,10 @@ if __name__ == '__main__':
     argparser.add_argument('--reset', action="store_true")
     argparser.add_argument('--test', action="store_true")
     argparser.add_argument("--iid", action="store_true")
-    argparser.add_argument('--dataset-path', help='Name of experiment', default="imagenet")
+    argparser.add_argument('--dataset-path', help='Name of experiment', default="/om/user/gkml/miniimagenet")
     argparser.add_argument("--rln", type=int, default=6)
     argparser.add_argument("--runs", type=int, default=5)
+    argparser.add_argument("--smart_LR", action="store_true")
 
     args = argparser.parse_args()
 

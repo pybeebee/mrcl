@@ -97,7 +97,7 @@ if __name__ == '__main__':
     argparser.add_argument('--epoch', type=int, help='epoch number', default=30)
     argparser.add_argument('--seed', type=int, help='epoch number', default=222)
     argparser.add_argument('--dataset', help='Name of experiment', default="imagenet")
-    argparser.add_argument('--dataset-path', help='Name of experiment', default="imagenet")
+    argparser.add_argument('--dataset-path', help='Name of experiment', default="/om/user/gkml/miniimagenet")
     argparser.add_argument('--lr', type=float, help='task-level inner update learning rate', default=0.0001)
     argparser.add_argument('--classes', type=int, nargs='+', help='Total classes to use in training',
                            default=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9])

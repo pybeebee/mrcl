@@ -1,4 +1,5 @@
 import logging
+import math
 
 import numpy as np
 import torch
@@ -21,9 +22,12 @@ class MetaLearingClassification(nn.Module):
         super(MetaLearingClassification, self).__init__()
 
         self.update_lr = args.update_lr
-        self.meta_lr = args.meta_lr
-        self.update_step = args.update_step
+        self.orig_update_lr = args.update_lr
 
+        self.meta_lr = args.meta_lr
+        self.orig_meta_lr = args.meta_lr
+
+        self.update_step = args.update_step
         self.net = Learner.Learner(config)
         self.optimizer = optim.Adam(self.net.parameters(), lr=self.meta_lr)
 
@@ -97,9 +101,9 @@ class MetaLearingClassification(nn.Module):
 
         y_rand_temp = torch.cat(y_rand_temp).unsqueeze(0)
         x_rand_temp = torch.cat(x_rand_temp).unsqueeze(0)
+
         x_traj, y_traj, x_rand, y_rand = torch.stack(x_traj), torch.stack(y_traj), torch.stack(x_rand), torch.stack(
             y_rand)
-
         x_rand = torch.cat([x_rand, x_rand_temp], 1)
         y_rand = torch.cat([y_rand, y_rand_temp], 1)
         # print(y_traj)
@@ -180,10 +184,23 @@ class MetaLearingClassification(nn.Module):
         return x_traj, y_traj, x_rand, y_rand
 
 
-    def inner_update(self, x, fast_weights, y, bn_training):
+    def inner_update(self, x, fast_weights, y, bn_training,args,epoch,step):
 
         logits = self.net(x, fast_weights, bn_training=bn_training)
-        loss = F.cross_entropy(logits, y)
+
+        if args.smart_LR and args.smart_LR_loc=="inner1" and step>0:
+            self.update_lr = torch.clamp(logits[0,-1],max=0.05).data.cuda()
+
+            if epoch < args.warm_start_range:
+                loss = F.cross_entropy(logits, y) + F.mse_loss(logits[0,-1],torch.tensor(np.asarray(self.orig_update_lr),dtype=torch.float32).cuda()) #calculate combo loss
+            else:
+                loss = F.cross_entropy(logits, y).cuda()
+        elif args.smart_LR and args.smart_LR_loc=='innerEnd' and step ==self.update_step-1:
+            loss = F.cross_entropy(logits, y) + F.mse_loss(logits[0,-1],torch.tensor(np.asarray(self.orig_update_lr),dtype=torch.float32).cuda()) #calculate combo loss
+
+        else:
+            loss = F.cross_entropy(logits, y).cuda()
+
         if fast_weights is None:
             fast_weights = self.net.parameters()
         #
@@ -195,7 +212,10 @@ class MetaLearingClassification(nn.Module):
         for params_old, params_new in zip(self.net.parameters(), fast_weights):
             params_new.learn = params_old.learn
 
-        return fast_weights
+        if args.smart_LR and args.smart_LR_loc=='innerEnd' and step == self.update_step-1:
+            return fast_weights, torch.clamp(logits[0,-1],max=0.05).data.cuda()
+        
+        return fast_weights, None
 
     def meta_loss(self, x, fast_weights, y, bn_training):
 
@@ -216,7 +236,7 @@ class MetaLearingClassification(nn.Module):
             grad_clipped.append(g)
         return grad_clipped
 
-    def forward(self, x_traj, y_traj, x_rand, y_rand,old_accs,old_meta_losses,args):
+    def forward(self, x_spt, y_spt, x_qry, y_qry,old_accs,old_meta_losses,args,epoch=None):
         """
         :param x_traj:   Input data of sampled trajectory
         :param y_traj:   Ground truth of the sampled trajectory
@@ -227,11 +247,106 @@ class MetaLearingClassification(nn.Module):
 
         # print(y_traj)
         # print(y_rand)
+
+        if not args.smart:
+            x_traj, y_traj, x_rand, y_rand = x_spt, y_spt, x_qry, y_qry
+            if torch.cuda.is_available():
+                x_traj, y_traj, x_rand, y_rand = x_traj.cuda(), y_traj.cuda(), x_rand.cuda(), y_rand.cuda()
+                
+            self.update_step = len(x_traj)
+            meta_losses = [0 for _ in range(self.update_step + 1)]  # losses_q[i] is the loss on step i
+            accuracy_meta_set = [0 for _ in range(self.update_step + 1)]
+
+            # Doing a single inner update to get updated weights
+            fast_weights, tmp = self.inner_update(x_traj[0], None, y_traj[0], True,args,epoch,0)
+
+            with torch.no_grad():
+                # Meta loss before any inner updates
+                meta_loss, last_layer_logits = self.meta_loss(x_rand[0], self.net.parameters(), y_rand[0], False)
+                meta_losses[0] += meta_loss
+
+                classification_accuracy = self.eval_accuracy(last_layer_logits, y_rand[0])
+                accuracy_meta_set[0] = accuracy_meta_set[0] + classification_accuracy
+
+                # Meta loss after a single inner update
+                meta_loss, last_layer_logits = self.meta_loss(x_rand[0], fast_weights, y_rand[0], False)
+                meta_losses[1] += meta_loss
+
+                classification_accuracy = self.eval_accuracy(last_layer_logits, y_rand[0])
+                accuracy_meta_set[1] = accuracy_meta_set[1] + classification_accuracy
+
+            for k in range(1, self.update_step):
+                # Doing inner updates using fast weights
+                fast_weights, tmp = self.inner_update(x_traj[k], fast_weights, y_traj[k], True,args,epoch,k)
+
+                # Computing meta-loss with respect to latest weights
+                meta_loss, logits = self.meta_loss(x_rand[0], fast_weights, y_rand[0], False)
+                meta_losses[k + 1] += meta_loss
+
+                # Computing accuracy on the meta and traj set for understanding the learning
+                with torch.no_grad():
+                    pred_q = F.softmax(logits, dim=1).argmax(dim=1)
+                    classification_accuracy = torch.eq(pred_q, y_rand[0]).sum().item()  # convert to numpy
+                    accuracy_meta_set[k + 1] = accuracy_meta_set[k + 1] + classification_accuracy
+
+            if args.smart_LR and args.smart_LR_loc =="innerEnd":
+                    self.update_lr = tmp.cuda()
+
+            # Taking the meta gradient step
+            self.optimizer.zero_grad()
+
+            if args.smart_LR and args.smart_LR_loc=='outer':
+                for param_group in self.optimizer.param_groups:
+                    param_group['lr'] = torch.clamp(logits[0,-1],min=0.0001,max=0.05).cuda().item()
+
+            if args.smart_LR and epoch < args.warm_start_range:
+                meta_loss = meta_losses[-1] + F.mse_loss(logits[0,-1],torch.tensor(np.asarray(self.orig_meta_lr),dtype=torch.float32).cuda()) #calculate combo loss
+            else:
+                meta_loss = meta_losses[-1] 
+
+            meta_loss.backward()
+
+            self.clip_grad_params(self.net, norm=5)
+
+            self.optimizer.step()
+            accuracies = np.array(accuracy_meta_set) / len(x_rand[0])
+
+            return accuracies, meta_losses
+
+        if torch.cuda.is_available():
+            device = torch.device('cuda')
+        else:
+            device = torch.device('cpu')
+
+        if args.use_mini == True:
+            mini_traj_size = math.ceil(x_spt.shape[0]*args.mini_traj_proportion)
+            mini_rand_size = x_spt.shape[0]-mini_traj_size
+
+            mini_x_traj = x_spt[:mini_traj_size]
+            mini_y_traj = y_spt[:][:mini_traj_size]
+
+            mini_x_rand = x_qry[:][:mini_rand_size]
+            mini_y_rand = y_qry[:][:mini_rand_size]
+            # mini_x_rand = x_spt[mini_traj_size:]
+            # mini_y_rand = y_spt[mini_traj_size:]
+            # mini_x_rand = mini_x_rand.permute(1,0,2,3,4)
+            # mini_y_rand = mini_y_rand.permute(1,0)  
+            if torch.cuda.is_available():
+                x_traj, y_traj, x_rand, y_rand = mini_x_traj.cuda(), mini_y_traj.cuda(), mini_x_rand.cuda(), mini_y_rand.cuda()
+            else:
+                x_traj, y_traj, x_rand, y_rand = mini_x_traj, mini_y_traj, mini_x_rand, mini_y_rand
+        else:
+            x_traj, y_traj, x_rand, y_rand = x_spt, y_spt, x_qry, y_qry
+            if torch.cuda.is_available():
+                x_traj, y_traj, x_rand, y_rand = x_traj.cuda(), y_traj.cuda(), x_rand.cuda(), y_rand.cuda()
+
+
+        # Save old parameters
+        torch.save(maml.net, my_experiment.path + "_"+str(args.name)+"entire_model.pth")
+        
         self.update_step = len(x_traj)
         meta_losses = [0 for _ in range(self.update_step + 1)]  # losses_q[i] is the loss on step i
         accuracy_meta_set = [0 for _ in range(self.update_step + 1)]
-
-        # Doing a single inner update to get updated weights
         fast_weights = self.inner_update(x_traj[0], None, y_traj[0], True)
 
         with torch.no_grad():
@@ -263,15 +378,22 @@ class MetaLearingClassification(nn.Module):
                 classification_accuracy = torch.eq(pred_q, y_rand[0]).sum().item()  # convert to numpy
                 accuracy_meta_set[k + 1] = accuracy_meta_set[k + 1] + classification_accuracy
 
-        # Taking the meta gradient step
+        accuracies = np.array(accuracy_meta_set) / len(x_rand[0])
+        if args.metric == "accuracy":
+            if accuracies[-1] > args.acc_threshold: # NO gradient if accuracy above threshold
+                self = torch.load(my_experiment.path + "_"+str(args.name)+"entire_model.pth").to(device)
+                return old_accs, old_meta_losses
+
+        elif args.metric == "loss":
+            if meta_losses[-1] < meta_losses[0]: # NO gradient if new loss lower (representation "good enough")
+                self = torch.load(my_experiment.path + "_"+str(args.name)+"entire_model.pth").to(device)
+                return old_accs, old_meta_losses
+
         self.optimizer.zero_grad()
         meta_loss = meta_losses[-1]
         meta_loss.backward()
-
         self.clip_grad_params(self.net, norm=5)
-
         self.optimizer.step()
-        accuracies = np.array(accuracy_meta_set) / len(x_rand[0])
 
         return accuracies, meta_losses
 
@@ -344,11 +466,110 @@ class MetaLearnerRegression(nn.Module):
         self.meta_lr = args.meta_lr
         self.update_step = args.update_step
 
-        self.net = Learner.Learner(config)
-        self.optimizer = optim.Adam(self.net.parameters(), lr=self.meta_lr)
-        self.meta_optim = torch.optim.lr_scheduler.MultiStepLR(self.optimizer, [1500, 2500, 3500], 0.3)
+        self.net = Learner.Learner(config) #this is the actual network architecture
+        self.optimizer = optim.Adam(self.net.parameters(), lr=self.meta_lr) #use Adam to optimie OML objetive
+        self.meta_optim = torch.optim.lr_scheduler.MultiStepLR(self.optimizer, [1500, 2500, 3500], 0.3) #decay learning rate based on epoch number
 
-    def forward(self, x_traj, y_traj, x_rand, y_rand):
+    def forward(self, x_spt, y_spt, x_qry, y_qry,old_losses,args):
+
+        if not args.smart:
+            x_traj, y_traj, x_rand, y_rand = x_spt, y_spt, x_qry, y_qry
+            if torch.cuda.is_available():
+                x_traj, y_traj, x_rand, y_rand = x_traj.cuda(), y_traj.cuda(), x_rand.cuda(), y_rand.cuda()
+                
+            losses_q = [0 for _ in range(len(x_traj) + 1)]
+
+            for i in range(1):
+                logits = self.net(x_traj[0], vars=None, bn_training=True)
+                logits_select = []
+                for no, val in enumerate(y_traj[0, :, 1].long()):
+                    logits_select.append(logits[no, val])
+                logits = torch.stack(logits_select).unsqueeze(1)
+                loss = F.mse_loss(logits, y_traj[0, :, 0].unsqueeze(1))
+                grad = torch.autograd.grad(loss, self.net.parameters())
+
+                fast_weights = list(
+                    map(lambda p: p[1] - self.update_lr * p[0] if p[1].learn else p[1], zip(grad, self.net.parameters())))
+                for params_old, params_new in zip(self.net.parameters(), fast_weights):
+                    params_new.learn = params_old.learn
+
+                with torch.no_grad():
+
+                    logits = self.net(x_rand[0], vars=None, bn_training=True)
+
+                    logits_select = []
+                    for no, val in enumerate(y_rand[0, :, 1].long()):
+                        logits_select.append(logits[no, val])
+                    logits = torch.stack(logits_select).unsqueeze(1)
+                    loss_q = F.mse_loss(logits, y_rand[0, :, 0].unsqueeze(1))
+                    losses_q[0] += loss_q
+
+                for k in range(1, len(x_traj)):
+                    logits = self.net(x_traj[k], fast_weights, bn_training=True)
+
+                    logits_select = []
+                    for no, val in enumerate(y_traj[k, :, 1].long()):
+                        logits_select.append(logits[no, val])
+                    logits = torch.stack(logits_select).unsqueeze(1)
+
+                    loss = F.mse_loss(logits, y_traj[k, :, 0].unsqueeze(1))
+                    grad = torch.autograd.grad(loss, fast_weights)
+                    fast_weights = list(
+                        map(lambda p: p[1] - self.update_lr * p[0] if p[1].learn else p[1], zip(grad, fast_weights)))
+
+                    for params_old, params_new in zip(self.net.parameters(), fast_weights):
+                        params_new.learn = params_old.learn
+
+                    logits_q = self.net(x_rand[0, 0:int((k + 1) * len(x_rand[0]) / len(x_traj)), :], fast_weights,
+                                        bn_training=True)
+
+                    logits_select = []
+                    for no, val in enumerate(y_rand[0, 0:int((k + 1) * len(x_rand[0]) / len(x_traj)), 1].long()):
+                        logits_select.append(logits_q[no, val])
+                    logits = torch.stack(logits_select).unsqueeze(1)
+                    loss_q = F.mse_loss(logits, y_rand[0, 0:int((k + 1) * len(x_rand[0]) / len(x_traj)), 0].unsqueeze(1))
+
+                    losses_q[k + 1] += loss_q
+
+            self.optimizer.zero_grad()
+
+            loss_q = losses_q[k + 1]
+            loss_q.backward() #calc gradient, spec. for random batch (the loss here quantifies interference)
+
+            self.optimizer.step() #take step with Adam to update the RLN, RLN, RLN!!!
+
+            return losses_q
+
+        if torch.cuda.is_available():
+            device = torch.device('cuda')
+        else:
+            device = torch.device('cpu')
+
+        if args.use_mini == True:
+            mini_traj_size = math.ceil(x_spt.shape[0]*args.mini_traj_proportion)
+            mini_rand_size = x_spt.shape[0]-mini_traj_size
+
+            mini_x_traj = x_spt[:mini_traj_size]
+            mini_y_traj = y_spt[:][:mini_traj_size]
+
+            mini_x_rand = x_qry[:][:mini_rand_size]
+            mini_y_rand = y_qry[:][:mini_rand_size]
+            # mini_x_rand = x_spt[mini_traj_size:]
+            # mini_y_rand = y_spt[mini_traj_size:]
+            # mini_x_rand = mini_x_rand.permute(1,0,2,3,4)
+            # mini_y_rand = mini_y_rand.permute(1,0)  
+            if torch.cuda.is_available():
+                x_traj, y_traj, x_rand, y_rand = mini_x_traj.cuda(), mini_y_traj.cuda(), mini_x_rand.cuda(), mini_y_rand.cuda()
+            else:
+                x_traj, y_traj, x_rand, y_rand = mini_x_traj, mini_y_traj, mini_x_rand, mini_y_rand
+        else:
+            x_traj, y_traj, x_rand, y_rand = x_spt, y_spt, x_qry, y_qry
+            if torch.cuda.is_available():
+                x_traj, y_traj, x_rand, y_rand = x_traj.cuda(), y_traj.cuda(), x_rand.cuda(), y_rand.cuda()
+
+
+        # Save old parameters
+        torch.save(maml.net, my_experiment.path + "_"+str(args.name)+"entire_model.pth")
 
         losses_q = [0 for _ in range(len(x_traj) + 1)]
 
@@ -404,14 +625,18 @@ class MetaLearnerRegression(nn.Module):
 
                 losses_q[k + 1] += loss_q
 
-        self.optimizer.zero_grad()
+            if losses_q[-1] > old_losses[-1]:
+                self = torch.load('regression_smart_'+str(args.smart)+'_mini_'+str(args.use_mini)+'_'+'entire_model.pth').to(device)
+                return old_losses
 
-        loss_q = losses_q[k + 1]
-        loss_q.backward()
+            self.optimizer.zero_grad()
 
-        self.optimizer.step()
+            loss_q = losses_q[k + 1]
+            loss_q.backward() #calc gradient, spec. for random batch (the loss here quantifies interference)
 
-        return losses_q
+            self.optimizer.step() #take step with Adam to update the RLN, RLN, RLN!!!
+
+            return losses_q
 
 
 def main():

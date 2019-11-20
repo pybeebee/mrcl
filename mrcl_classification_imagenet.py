@@ -10,13 +10,15 @@ import datasets.task_sampler as ts
 import model.modelfactory as mf
 import utils.utils as utils
 from experiment.experiment import experiment
-from model.meta_learner import MetaLearingClassification
+from model.meta_learner_suggested import MetaLearingClassification
 import datasets.miniimagenet as imgnet
 
 logger = logging.getLogger('experiment')
 
 
 def main(args):
+    accs = -2.**30
+    loss = [2.**30,2.**30]
     utils.set_seed(args.seed)
 
     my_experiment = experiment(args.name, args, "./results/", commit_changes=args.commit)
@@ -68,7 +70,7 @@ def main(args):
         if torch.cuda.is_available():
             x_spt, y_spt, x_qry, y_qry = x_spt.cuda(), y_spt.cuda(), x_qry.cuda(), y_qry.cuda()
 
-        accs, loss = maml(x_spt, y_spt, x_qry, y_qry)
+        accs, loss = maml(x_spt, y_spt, x_qry, y_qry,accs,loss,args)
 
         # Evaluation during training for sanity checks
         if step % 40 == 39:
@@ -78,7 +80,7 @@ def main(args):
             utils.log_accuracy(maml, my_experiment, iterator_test, device, writer, step)
             utils.log_accuracy(maml, my_experiment, iterator_train, device, writer, step)
         
-        torch.save(maml.net, my_experiment.path + "imagenet_model.model")
+        torch.save(maml.net, my_experiment.path + "mrcl_imagenet_model.model")
 
 
 #
@@ -93,10 +95,18 @@ if __name__ == '__main__':
     argparser.add_argument('--update_step', type=int, help='task-level inner update steps', default=10)
     argparser.add_argument('--name', help='Name of experiment', default="mrcl_classification")
     argparser.add_argument('--dataset', help='Name of experiment', default="imagenet")
-    argparser.add_argument('--dataset-path', help='Dataset path', default="~/")
+    argparser.add_argument('--dataset-path', help='Dataset path', default="/om/user/gkml/miniimagenet")
     argparser.add_argument("--commit", action="store_true")
     argparser.add_argument("--no-reset", action="store_true")
     argparser.add_argument("--rln", type=int, default=6)
+    argparser.add_argument("--smart", action="store_true")
+    argparser.add_argument("--use_mini", action="store_true")
+    argparser.add_argument('--mini_traj_proportion', type=float, help='proportion of big support to be used in little support', default=0.8)
+    argparser.add_argument('--acc_threshold', type=float, help='Thresholding accuracy', default=0.9)
+    argparser.add_argument('--metric', help='Compare accuracy or loss', default='accuracy')
+    argparser.add_argument("--smart_LR", action="store_true")
+    argparser.add_argument('--smart_LR_loc', help='when to update smart LR', default='inner1')
+    argparser.add_argument('--warm_start_range', help='', default=500)
     args = argparser.parse_args()
 
     args.name = "/".join([args.dataset, str(args.meta_lr).replace(".", "_"), args.name])

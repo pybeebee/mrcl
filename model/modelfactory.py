@@ -3,7 +3,7 @@ class ModelFactory():
         pass
 
     @staticmethod
-    def get_model(model_type, dataset, in_channels=6, num_actions=6, width=300):
+    def get_model(model_type, dataset, in_channels=6, num_actions=6, width=300,smart_LR=False):
 
         if "Sin" == dataset:
             if model_type=="old":
@@ -61,7 +61,37 @@ class ModelFactory():
 
                 ]
 
-        elif dataset == "omniglot":
+        elif dataset == "omniglot" and smart_LR:
+            channels = 256
+            # channels = 256
+            return [
+                ('conv2d', [channels, 1, 3, 3, 2, 0]),
+                ('relu', [True]),
+                # ('bn', [64]),
+                ('conv2d', [channels, channels, 3, 3, 1, 0]),
+                ('relu', [True]),
+
+                ('conv2d', [channels, channels, 3, 3, 2, 0]),
+                ('relu', [True]),
+
+                ('conv2d', [channels, channels, 3, 3, 1, 0]),
+                ('relu', [True]),
+                # ('bn', [128]),
+                ('conv2d', [channels, channels, 3, 3, 2, 0]),
+                ('relu', [True]),
+                # ('bn', [256]),
+                ('conv2d', [channels, channels, 3, 3, 2, 0]),
+                ('relu', [True]),
+                # ('bn', [512]),
+                ('flatten', []),
+                ('rep', []),
+
+                ('linear', [1024, 9 * channels]),
+                ('relu', [True]),
+                ('linear', [1001, 1024])
+            ]
+        
+        elif dataset == "omniglot" and not smart_LR:
             channels = 256
             # channels = 256
             return [

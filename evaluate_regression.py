@@ -253,7 +253,7 @@ def main(args):
         print("Loss vector = ", loss_vector)
         my_experiment.results[str(lrs)] = str(loss_vector_results)
         my_experiment.store_json()
-    torch.save(maml.net, my_experiment.path + "eval_regression_generated_model.model")
+    torch.save(maml.net, my_experiment.path + str(args.name) + ".model")
 
 
 # #

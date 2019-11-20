@@ -43,7 +43,7 @@ def main(args):
 
     sampler = ts.SamplerFactory.get_sampler(args.dataset, args.classes, dataset, dataset_test)
 
-    config = mf.ModelFactory.get_model("na", args.dataset)
+    config = mf.ModelFactory.get_model("na", args.dataset,smart_LR=args.smart_LR)
 
     if torch.cuda.is_available():
         device = torch.device('cuda')
@@ -56,11 +56,11 @@ def main(args):
     
     for step in range(args.steps): #epoch
 
-        t1 = np.random.choice(args.traj_classes, args.tasks, replace=False) #sample sine waves
+        t1 = np.random.choice(args.traj_classes, args.tasks, replace=False) #sample 5 classes from traj
 
         d_traj_iterators = []
-        for t in t1:
-            d_traj_iterators.append(sampler.sample_task([t]))
+        for t in t1: #for each of the 5 classes,
+            d_traj_iterators.append(sampler.sample_task([t])) 
 
         d_rand_iterator = sampler.get_complete_iterator()
 
@@ -70,7 +70,7 @@ def main(args):
         if torch.cuda.is_available():
             x_spt, y_spt, x_qry, y_qry = x_spt.cuda(), y_spt.cuda(), x_qry.cuda(), y_qry.cuda()
 
-        accs, loss = maml(x_spt, y_spt, x_qry, y_qry,accs,loss,args)
+        accs, loss = maml(x_spt, y_spt, x_qry, y_qry,accs,loss,args,step)
 
         # Evaluation during training for sanity checks
         if step % 40 == 39:
@@ -80,12 +80,7 @@ def main(args):
             utils.log_accuracy(maml, my_experiment, iterator_test, device, writer, step)
             utils.log_accuracy(maml, my_experiment, iterator_train, device, writer, step)
 
-        if args.smart and args.use_mini:
-            torch.save(maml.net, my_experiment.path + "omniglot_smart_little.model")
-        elif args.smart and not args.use_mini:
-            torch.save(maml.net, my_experiment.path + "omniglot_smart_big.model")
-        else:
-            torch.save(maml.net, my_experiment.path + "omniglot_model.model")
+        torch.save(maml.net, my_experiment.path +".model")
 #
 if __name__ == '__main__':
     argparser = argparse.ArgumentParser()
@@ -101,9 +96,16 @@ if __name__ == '__main__':
     argparser.add_argument("--commit", action="store_true")
     argparser.add_argument("--no-reset", action="store_true")
     argparser.add_argument("--rln", type=int, default=6)
-    argparser.add_argument("--smart", type=bool, default=False)
-    argparser.add_argument("--use_mini", type=bool, default=False)
+    # argparser.add_argument("--smart", type=bool, default=False)
+    argparser.add_argument("--smart", action="store_true")
+    # argparser.add_argument("--use_mini", type=bool, default=False)
+    argparser.add_argument("--use_mini", action="store_true")
     argparser.add_argument('--mini_traj_proportion', type=float, help='proportion of big support to be used in little support', default=0.8)
+    argparser.add_argument('--acc_threshold', type=float, help='Thresholding accuracy', default=0.9)
+    argparser.add_argument('--metric', help='Compare accuracy or loss', default='accuracy')
+    argparser.add_argument("--smart_LR", action="store_true")
+    argparser.add_argument('--smart_LR_loc', help='when to update smart LR', default='inner1')
+    argparser.add_argument('--warm_start_range', help='', default=500)
     args = argparser.parse_args()
 
     args.name = "/".join([args.dataset, str(args.meta_lr).replace(".", "_"), args.name])

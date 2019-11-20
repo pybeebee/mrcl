@@ -1,16 +1,17 @@
 import os
 
 import seaborn as sns
-
-results_dir = "/Volumes/Macintosh HD/Users/khurramjaved96/MRCL_talk/UncorrvsCorr"
-results_dict = {}
-std_dict = {}
 import pandas as pd
 import json
 import matplotlib.pyplot as plt
 
+
+results_dir = "/om/user/gkml/results"
+results_dict = {}
+std_dict = {}
 data = {}
 folders = []
+
 for f in os.listdir(results_dir):
     if "DS_St" not in f:
         folders.append(f)
